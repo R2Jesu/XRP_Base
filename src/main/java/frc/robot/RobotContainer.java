@@ -4,9 +4,6 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.PS4Controller;
 import frc.robot.commands.ArcadeDrive;
 import frc.robot.commands.AutonomousDistance;
 import frc.robot.commands.AutonomousTime;
@@ -16,10 +13,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.xrp.XRPOnBoardIO;
 import edu.wpi.first.wpilibj2.command.Command;
+//import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj.AnalogInput;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -32,11 +31,12 @@ public class RobotContainer {
   private final Drivetrain m_drivetrain = new Drivetrain();
   private final XRPOnBoardIO m_onboardIO = new XRPOnBoardIO();
   private final Arm m_arm = new Arm();
+  private final AnalogInput m_dist = new AnalogInput(2);
 
   // Assumes a gamepad plugged into channel 0
-//  private final Joystick m_controller = new Joystick(0);
-//  private final PS5Controller m_controller = new PS5Controller(0);
-  private final PS4Controller m_controller = new PS4Controller(0);
+  private final CommandXboxController m_controller = new CommandXboxController(0);
+  //private final CommandPS4Controller m_controller = new CommandPS4Controller(0);
+
   // Create SmartDashboard chooser for autonomous routines
   private final SendableChooser<Command> m_chooser = new SendableChooser<>();
 
@@ -46,16 +46,10 @@ public class RobotContainer {
     configureButtonBindings();
   }
 
-  /**
-   * Use this method to define your button->command mappings. Buttons can be created by
-   * instantiating a {@link GenericHID} or one of its subclasses ({@link
-   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
-   * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
-   */
   private void configureButtonBindings() {
     // Default command is arcade drive. This will run unless another command
     // is scheduled over it.
-    m_drivetrain.setDefaultCommand(getArcadeDriveCommand());
+    m_drivetrain.setDefaultCommand(new ArcadeDrive(m_drivetrain, () -> Math.abs(m_controller.getRightY()) > 0.4 ? -m_controller.getRightY() : 0.0, () -> Math.abs(m_controller.getLeftX()) > 0.4 ? -m_controller.getLeftX() : 0.0));
 
     // Example of how to use the onboard IO
     Trigger userButton = new Trigger(m_onboardIO::getUserButtonPressed);
@@ -63,15 +57,24 @@ public class RobotContainer {
         .onTrue(new PrintCommand("USER Button Pressed"))
         .onFalse(new PrintCommand("USER Button Released"));
 
-    JoystickButton joystickAButton = new JoystickButton(m_controller, 1);
-    joystickAButton
+    m_controller.button(1)
         .onTrue(new InstantCommand(() -> m_arm.setAngle(45.0), m_arm))
         .onFalse(new InstantCommand(() -> m_arm.setAngle(0.0), m_arm));
 
-    JoystickButton joystickBButton = new JoystickButton(m_controller, 2);
-    joystickBButton
+    m_controller.button(2)
         .onTrue(new InstantCommand(() -> m_arm.setAngle(90.0), m_arm))
         .onFalse(new InstantCommand(() -> m_arm.setAngle(0.0), m_arm));
+
+
+    //m_controller.button(1).onTrue(new PrintCommand("Button 1 Pressed"));
+    //m_controller.button(2).onTrue(new PrintCommand("Button 2 Pressed"));
+    m_controller.button(3).onTrue(new PrintCommand("Button 3 Pressed"));
+    m_controller.button(4).onTrue(new PrintCommand("Button 4 Pressed"));
+    m_controller.button(5).onTrue(new PrintCommand("Button 5 Pressed"));
+    m_controller.button(6).onTrue(new PrintCommand("Button 6 Pressed"));
+    m_controller.button(7).onTrue(new PrintCommand("Button 7 Pressed"));
+    m_controller.button(8).onTrue(new PrintCommand("Button 8 Pressed"));
+    m_controller.button(9).onTrue(new PrintCommand("Button 9 Pressed"));
 
     // Setup SmartDashboard options
     m_chooser.setDefaultOption("Auto Routine Distance", new AutonomousDistance(m_drivetrain));
@@ -87,14 +90,4 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return m_chooser.getSelected();
   }
-
-  /**
-   * Use this to pass the teleop command to the main {@link Robot} class.
-   *
-   * @return the command to run in teleop
-   */
-  public Command getArcadeDriveCommand() {
-    return new ArcadeDrive(
-        m_drivetrain, () -> -m_controller.getRawAxis(1), () -> -m_controller.getRawAxis(2));
-  }
-}
+}     
